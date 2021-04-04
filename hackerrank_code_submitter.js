@@ -1,6 +1,5 @@
-
-let puppeteer = require("puppeteer");
-
+let puppeteer=require("puppeteer");
+let { codes } = require("./code");
 let gtab;
 let browserWillBeLaunchpromisses=puppeteer.launch(
     {
@@ -32,22 +31,111 @@ browserWillBeLaunchpromisses.then(function (browserInstance){
     return combinedPromise;
 
 }).then(function (){
-    let interview_prep_Clickpromis=gtab.click(".card-content h3[title='Interview Preparation Kit']");
-    let worm_up_selector=gtab.waitForSelector("a[data-attr1='warmup']",{visible:true});
-    let combined_promisse=Promise.all([interview_prep_Clickpromis,
-        gtab.waitForNavigation({waitUntil:"networkidle0"}),worm_up_selector]);
-    return combined_promisse;
+    let interview_prep_Clickpromis=waitAndClick(".card-content h3[title='Interview Preparation Kit']");
+    return interview_prep_Clickpromis; 
 
 }).then(function (){
-    let worm_up_clickPromiss=gtab.click("a[data-attr1='warmup']");
-    let sockElelments=gtab.waitForSelector("a[data-attr1='sock-merchant']",{visible:true});
-    let combined_promisse=Promise.all([worm_up_clickPromiss,
-        gtab.waitForNavigation({waitUntil:"networkidle0"}),sockElelments]);
-    return combined_promisse;
+    let worm_up_clickPromiss=waitAndClick("a[data-attr1='warmup']");
+    return worm_up_clickPromiss;
 }).then(function (){
-    let clickPromiss=gtab.click("a[data-attr1='sock-merchant']");
-    return clickPromiss;
-    
-}).catch(function (err){
+    return gtab.url();
+}).then(function (url){
+    console.log(url);
+    let question_obj=codes[0];
+    questionSolver(url,question_obj.soln,question_obj.qName);
+
+})
+.catch(function (err){
     console.log(err);
 })
+
+function waitAndClick(Selector){
+    return new Promise(function (resolve,reject){
+        let selectorWaitPromise=gtab.waitForSelector(Selector,{visible:true});
+        selectorWaitPromise.then(function (){
+            let clickPomise=gtab.click(Selector);
+            return clickPomise;
+        }).then( function(){
+            resolve();
+        }).catch(function(){
+            reject(err);
+        })
+    })
+}
+
+
+function questionSolver(modulepageUrl, code, questionName) {
+    return new Promise(function (resolve, reject) {
+        // page visit 
+        let reachedPageUrlPromise = gtab.goto(modulepageUrl);
+
+        reachedPageUrlPromise.then(function () {
+                //  page h4 -> mathcing h4 -> click
+                // function will exceute inside the browser
+                function browserconsolerunFn(questionName) {
+                    let allH4Elem = document.querySelectorAll("h4");
+                    let textArr = [];
+                    for (let i = 0; i < allH4Elem.length; i++) {
+                        let myQuestion = allH4Elem[i]
+                        .innerText.split("\n")[0];
+                        textArr.push(myQuestion);
+                    }
+                    let idx = textArr.indexOf(questionName);
+                    // console.log(idx);
+                    allH4Elem[idx].click();
+                }
+                
+                let pageClickPromise = 
+                gtab.evaluate(browserconsolerunFn, questionName);
+                return pageClickPromise;
+            }).then(function (){
+                //clicking in the checkbox for custom input where we will paste our code
+                let inputcheckBoxpromiss=waitAndClick(".custom-checkbox.inline");
+                return inputcheckBoxpromiss;
+            }).then(function (){
+                //finding the custominput area and typing our code in that area
+                let codeTypepromiss=gtab.type(".custominput",code);
+                return codeTypepromiss;
+            }).then(function(){
+                //now press cntr btn and hold it 
+                let cntrlHoldPromiss=gtab.keyboard.down("Control");
+                return cntrlHoldPromiss;
+
+            }).then(function (){
+                //now press a control is already pressed ctrl+a to selllect all code from custom input area
+                let press_a_promiss=gtab.keyboard.press("a");
+                return press_a_promiss;
+
+            }).then(function(){
+                //after cntr+a now cut the code press x 
+                let cutPromiss=gtab.keyboard.press("x");
+                return cutPromiss;
+            }).then(function (){
+                // now clicked on the editor to paste the code
+                let editorWillBeClickedPromise=gtab.click(".monaco-editor.no-user-select.vs");
+                return editorWillBeClickedPromise;
+            }).then(function (){
+                //now press ctrl+a to select all code from editor to remove and paste our own code
+                let press_a_promiss=gtab.keyboard.press("a");
+                return press_a_promiss;
+            }).then(function (){
+                //now paste the code to editor press ctrl+v
+                let pastePromiss=gtab.keyboard.press("v");
+                return pastePromiss;
+            }).then(function (){
+                //now leave the control button
+                let cntrlLeavePromiss=gtab.keyboard.up("Control",{delay:100});
+                return cntrlLeavePromiss;
+            }).then(function (){
+                //finally press the submit button to submit code
+                setTimeout(function(){
+                },5000);
+                let clickSubmitBtn=gtab.click(".pull-right.btn.btn-primary.hr-monaco-submit");
+                return clickSubmitBtn;
+            }).then(function(){
+                resolve();
+            }).catch(function (){
+                reject(err);
+            })
+    })
+}
