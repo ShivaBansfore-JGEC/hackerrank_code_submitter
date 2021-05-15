@@ -1,4 +1,6 @@
 
+https://user-images.githubusercontent.com/51274153/118363801-bbd4f000-b5b3-11eb-8ca6-8fa9c5432a75.mp4
+
 Input:
     * Link of Hackerrank website
 
@@ -19,7 +21,6 @@ Approach:
     Then find the selector for each question and click and after that find the selector for
     editor and cut and paste the code by funtion provide by puppeteer
 
-https://user-images.githubusercontent.com/51274153/118363801-bbd4f000-b5b3-11eb-8ca6-8fa9c5432a75.mp4
 
 
 
